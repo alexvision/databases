@@ -18,14 +18,15 @@ module.exports.createConnection = function(){
   connection.connect();
 }
 
-// var queryString = 'SELECT * FROM messages';
-// connection.query(queryString, function(err, rows, fields) {
-//     if (err) throw err;
- 
-//     for (var i in rows) {
-//         console.log(rows);
-//     }
-// });
+module.exports.getAllMessages = function(){
+  return new Promise(function(resolve, reject){
+    connection.query("SELECT * FROM messages", function(err, rows, fields){
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
+
+};
 
 module.exports.getByName = function(queryString) {
   return new Promise(function(resolve,reject) {
@@ -41,10 +42,11 @@ module.exports.getByName = function(queryString) {
 
 module.exports.addToDb = function(queryString){
   //connection.connect();
-  connection.query(queryString, function(err, rows, fields) {
+  console.log(queryString);
+  connection.query(queryString, function(err, insertResults) {
     if (err) throw err;
-
-    console.log('Added User to DB')
+    else
+    console.log(insertResults);
 
   });   
 
@@ -64,9 +66,10 @@ module.exports.getUserRoomId = function(username, roomname) {
       return new Promise(function(resolve,reject){
         var queryString = 'SELECT RoomId FROM rooms WHERE RoomName=' + '"' + roomname + '"' + ';'
         connection.query(queryString, function(err, roomRows, roomFields){
+          //console.log("roomrows: " + roomRows);
           if (err) reject(err);
 
-          resolve(userRows, roomRows);
+          resolve([userRows, roomRows]);
         });
       });
     });     
