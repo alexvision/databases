@@ -4,7 +4,7 @@ var db = require('../db');
 module.exports = {
   messages: {
     get: function (req, res) {
-      return db.Messages.findAll()
+      return db.Messages.findAll({include: [db.Users]})
         .then(function(data){
           res.send({results: data});
         });
@@ -34,7 +34,6 @@ module.exports = {
     post: function (message) {
       return db.getByName(message.Username)
       .then(function(row) {
-        console.log("THIS IS THE INPUT: ",row)
         if (row.length === 0) {
           db.addToDb('INSERT INTO users (Username) VALUES (' + '"' + message.Username + '"' + ')')
         }
