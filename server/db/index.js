@@ -1,81 +1,84 @@
-var mysql = require('mysql');
-var Promise = require('bluebird');
+var Sequelize = require('sequelize');
 
-// Create a database connection and export it from this file.
-// You will need to connect with the user "root", no password,
-// and to the database "chat".
+module.exports.sequelize = sequelize = new Sequelize('chatsequelize', 'root', '', {
+  host: 'localhost',
+  dialect: 'mysql'
+});
 
+module.exports.Rooms = Rooms = sequelize.define('rooms', {
+  RoomName: Sequelize.STRING,
+});
 
-var connection = mysql.createConnection(
-  {
-    host: 'localhost',
-    user: 'root',
-    database: 'chat',
-  }
-);
+module.exports.Users = Users = sequelize.define('users', {
+  Username: Sequelize.STRING,
+});
 
-module.exports.createConnection = function(){
-  connection.connect();
-}
+module.exports.Messages = Messages = sequelize.define('messages', {
+  MessageText: Sequelize.STRING
+});
+
+Messages.belongsTo(Users);
+Users.hasMany(Messages, {as: 'Messages'});
+Messages.belongsTo(Rooms);
+Rooms.hasMany(Messages, {as: 'Messages'});
+
+// Users.sync();
+// Rooms.sync();
+// Messages.sync();
 
 module.exports.getAllMessages = function(){
-  return new Promise(function(resolve, reject){
-    connection.query("SELECT m.MessageId, m.MessageText, u.Username, r.RoomName FROM messages m " +
-      "INNER JOIN rooms r on (m.RoomId=r.RoomId) INNER JOIN users u on (m.UserId=u.UserId)"
-        , function(err, rows, fields){
-      if (err) reject(err);
-      resolve(rows);
-    });
+  Messages.findAll({
+    attributes: ['MessageText', 'MessageId'],
+    include: [Rooms, Users]
+  })
+};
+
+
+module.exports.getByName = function(table, constraints) {
+  return table.findAll({
+    where: constraints
   });
-
 };
 
-module.exports.getByName = function(queryString) {
-  return new Promise(function(resolve,reject) {
-    connection.query(queryString, function(err, rows, fields) {
-      if (err) reject(err);
-
-      resolve(rows);
-    });
-  });   
-
-  //connection.end();
-};
-
-module.exports.addToDb = function(queryString){
-  //connection.connect();
-  console.log(queryString);
-  connection.query(queryString, function(err, insertResults) {
-    if (err) throw err;
-    else
-    console.log(insertResults);
-
-  });   
-
-  // connection.end();
+module.exports.addToDb = function(table, values){
+  table.create(values);
 }
 
 module.exports.getUserRoomId = function(username, roomname) {
-  return new Promise(function(resolve,reject){
-    var queryString = 'SELECT UserId FROM users WHERE Username =' + '"' + username + '"' + ';';
-
-    connection.query(queryString, function(err, userRows, userFields){
-      if (err) reject(err);
-       resolve(userRows); 
-    });   
-  })
-    .then(function(userRows) { 
-      return new Promise(function(resolve,reject){
-        var queryString = 'SELECT RoomId FROM rooms WHERE RoomName=' + '"' + roomname + '"' + ';'
-        connection.query(queryString, function(err, roomRows, roomFields){
-          //console.log("roomrows: " + roomRows);
-          if (err) reject(err);
-
-          resolve([userRows, roomRows]);
-        });
-      });
-    });     
+  var userId, roomId
+  return getByName(Users, {Username: username})
+    .then(function(user){
+      userId = user.UserId;
+      return getByName(Rooms, {RoomName: roomname})
+    })
+    .finally(function(room){
+      roomId = room.RoomId;
+      return [userId, roomId];
+    });  
 } 
+
+
+// var mysql = require('mysql');
+// var Promise = require('bluebird');
+
+
+// // Create a database connection and export it from this file.
+// // You will need to connect with the user "root", no password,
+// // and to the database "chat".
+
+
+// var connection = mysql.createConnection(
+//   {
+//     host: 'localhost',
+//     user: 'root',
+//     database: 'chat',
+//   }
+// );
+
+// module.exports.createConnection = function(){
+//   connection.connect();
+// }
+
 
 
 

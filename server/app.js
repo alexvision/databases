@@ -17,7 +17,7 @@ app.set("port", 3000);
 // Logging and parsing
 app.use(morgan('dev'));
 app.use(parser.json());
-db.createConnection();
+db.sequelize.sync({force: true});
 
 // Set up our routes
 app.use("/classes", router);
