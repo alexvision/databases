@@ -30,7 +30,14 @@ module.exports = {
 
   users: {
     // Ditto as above.
-    get: function () {},
+    get: function (req, res) {
+      console.log("req: ", req);
+      // db.Messages.findAll({where: {Username: req.query.username},
+      //   include: [Users])
+      // .then(function(data){
+      //   res.send({results: data});
+      // })
+    },
     post: function (message) {
       return db.getByName(message.Username)
       .then(function(row) {
